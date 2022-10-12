@@ -1,0 +1,11 @@
+[package]
+name = "pomodoro"
+version = "0.1.0"
+edition = "2021"
+authors = ["Hlec"]
+description  = "Testing desktop dioxus"
+license = "MIT"
+
+[dependencies]
+dioxus = {version = "0.2.4", features = ["desktop"] }
+tokio = { version = "1.21.0", features = ["full"] }
