@@ -1,7 +1,4 @@
 ## Pomodoro Timer
 
-![代替テキスト]("url")
-
-Download
-
-Download from the [Releases Page]("")
+![Pomodoro]("https://github.com/hlecwtc/pomodoro/blob/main/.github/image/timer.png")
+![Menu]("https://github.com/hlecwtc/pomodoro/blob/main/.github/image/menu.png")
