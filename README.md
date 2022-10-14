@@ -1,5 +1,5 @@
 ## Pomodoro Timer
 
-![Pomodoro]("https://github.com/hlecwtc/pomodoro/blob/main/.github/image/timer.png")
+<img alt="Pomodoro" src=".github/image/timer.png" width="800px">
 
-![Menu]("https://github.com/hlecwtc/pomodoro/blob/main/.github/image/menu.png")
+<img alt="Menu" src=".github/image/menu.png" width="800px">
