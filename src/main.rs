@@ -57,9 +57,8 @@ pub fn Clock(
                                 count.set(*s_break.current()*60);
                                 color.set("#00008B".to_string());
                             },    
-                            }
                         }
-                    //}
+                    }
                 }
             }
         }
