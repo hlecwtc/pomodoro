@@ -4,10 +4,13 @@ use dioxus::prelude::*;
 use std::time::Duration;
 
 #[inline_props]
-pub fn ClockTime(cx: Scope, now_m: UseState<i32>, now_s: UseState<i32>) -> Element{
-    let clock_display = format!("{} : {:0>2}", *now_m.current(), *now_s.current());
+pub fn ClockTime(cx: Scope, count: UseState<i32>, color: UseState<String>) -> Element{
+    let clock_display = format!("{} : {:0>2}", *count.current()/60, *count.current()%60);
     cx.render(rsx!{
-        h1{"{clock_display}"}
+        h1{
+            style: "display: flex; justify-content: center; color: {color}",
+            "{clock_display}"
+        }
     })
 }
 
@@ -16,72 +19,86 @@ pub fn Clock(
     cx: Scope,
     task_time: UseState<i32>, 
     short_break: UseState<i32>, 
-    long_break: UseState<i32>
+    long_break: UseState<i32>,
+    count: UseState<i32>,
+    start: UseState<bool>,
+    color: UseState<String>
 ) -> Element{
-    let m_count = use_state(&cx, || *task_time.current());
-    let s_count = use_state(&cx, || 0);
-    let start = use_state(&cx, || false);
+    let clock_count = use_state(&cx, || 0);
+    let start_button = use_state(&cx, || "block");
+    let stop_button = use_state(&cx, || "none");
 
         use_future(&cx, (), move |_| {
-            let mut clock_count = 0;
-            let mut count = *task_time.current()*60;
-            let mut m_count = m_count.clone();
-            let mut s_count = s_count.clone();
+            let mut clock_count = clock_count.clone();
+            let mut count = count.clone();
             let task = task_time.clone();
             let s_break = short_break.clone();
             let l_break = long_break.clone();
             let start = start.clone();
+            let color = color.clone();
 
             async move {
                 loop {
                     tokio::time::sleep(Duration::from_millis(1000)).await;
                 if *start.current(){
-                    s_count -= 1;
                     count -= 1;
-                    if count%60 == 59{
-                        m_count -= 1;
-                        s_count.set(59);
-                    if count < 0{
+                    if *count.current() < 0{
                         clock_count += 1;
-                        s_count.set(0);
-                        match clock_count%8{
+                        match *clock_count.current()%8{
                             0|2|4|6=>{
-                                count = *task.current()*60;
-                                m_count.set(*task.current());
+                                count.set(*task.current()*60);
+                                color.set("#B22222".to_string());
                             },
                             7=>{
-                                count = *l_break.current()*60;
-                                m_count.set(*l_break.current());
+                                count.set(*l_break.current()*60);
+                                color.set("#B28B22".to_string());
                             },
                             _=>{
-                                count = *s_break.current()*60;
-                                m_count.set(*s_break.current());
+                                count.set(*s_break.current()*60);
+                                color.set("#00008B".to_string());
                             },    
                             }
                         }
-                    }
-                } else {
-                    m_count.set(*task.current());
-                    s_count.set(0);
-                    count = *task.current()*60;
+                    //}
+                }
             }
         }
-        }
     });
-    
 
     cx.render(rsx!{
-        button{
-            style: "float: left;",
-            onclick:move |_ev| {start.set(true);},"Start"
-        }
-        button{
-            style: "float: right;",
-            onclick:move |_ev| {start.set(false);},"Stop"
-        }
+        ClockTime{count: count.clone(), color: color.clone()}
         div{
-            style: "text-align: center;",
-            ClockTime{now_m: m_count.clone(), now_s: s_count.clone()}
+        button{
+            id: "StartButton",
+            style: "display: {start_button};",
+            onclick:move |_ev| {
+                start.set(true);
+                start_button.set("none");
+                stop_button.set("block");
+            },
+            "Start"
+        }
+        button{
+            id: "StopButton",
+            style: "display: {stop_button};",
+            onclick:move |_ev| {
+                start.set(false);
+                start_button.set("block");
+                stop_button.set("none");
+            },
+            "Stop"
+        }
+        button{
+            id: "ResetButton",
+            style: "display: block;",
+            onclick: move |_ev| {
+                start.set(false);
+                count.set(*task_time.current()*60);
+                clock_count.set(0);
+                color.set("#B22222".to_string());
+            },
+            "Reset"
+        }
         }
     })
 }
@@ -93,42 +110,106 @@ pub enum Times{
     ShortBreakTime
 }
 
+#[inline_props]
+pub fn SetTime(
+    cx: Scope,
+    time: UseState<i32>,
+    count: UseState<i32>,
+    start: UseState<bool>,
+    max: u32,
+    step: u32
+) -> Element {
+    cx.render(rsx!{
+            input{
+                r#type: "range",
+                min: "0",
+                max: "{max}",
+                step: "{step}",
+                value: "{time}",
+                onchange: move |ev| {
+                    time.set(ev.value.parse::<i32>().unwrap());
+                    if !*start.current(){
+                        count.set(ev.value.parse::<i32>().unwrap()*60)
+                    }
+                }
+            }
+            label{"{time} minutes"}
+            br{}
+    })
+}
+
 fn app(cx: Scope) -> Element {
-    let change_time = use_state(&cx, || Times::TaskTime);
-    let task_time = use_state(&cx, || 27);
+    let task_time = use_state(&cx, || 30);
     let short_break_time = use_state(&cx, || 3);
     let break_time = use_state(&cx, || 10);
+    let count = use_state(&cx, || 30*60);
+    let menu = use_state(&cx, || "none");
+    let timer = use_state(&cx, || "block");
+    let start = use_state(&cx, || false);
+    let color = use_state(&cx, || "#b22222".to_string());
 
     cx.render(rsx!{
+        style { [include_str!("../src/style.css")] }
         div{
-            select{
-                onchange: move |ev| {
-                    match ev.value.as_str(){
-                    "Task Time"=>change_time.set(Times::TaskTime),
-                    "Short Break Time"=>change_time.set(Times::ShortBreakTime),
-                    "Break Time"=>change_time.set(Times::BreakTime),
-                    _=>(),
-                }},
-                option{value:"Task Time", "Task Time"}
-                option{value:"Short Break Time", "Short Break Time"}
-                option{value:"Break Time", "Break Time"}
-            }
-            select{
-                onchange: move |ev| {
-                    match **change_time{
-                        Times::TaskTime=>task_time.set(ev.value.parse::<i32>().unwrap()),
-                        Times::BreakTime=>break_time.set(ev.value.parse::<i32>().unwrap()),
-                        Times::ShortBreakTime=>short_break_time.set(ev.value.parse::<i32>().unwrap()),
-                    }
+            class: "header",
+            button{
+                onclick: move |_ev| {
+                    menu.set("none");
+                    timer.set("block");
                 },
-                (0..90).map(|m| rsx!{ option{value: "{m}", "{m}"} })
+                "Timer"
             }
-            label{"Minutes"}
+            button{
+                onclick: move |_ev| {
+                    menu.set("block");
+                    timer.set("none");
+                },    
+                "Menu"
+            }
         }
-        Clock{task_time: task_time.clone(), short_break: short_break_time.clone(), long_break: break_time.clone()}
+        div{
+            class: "menu",
+            style: "display: {menu}; height: 80%",
+            div{
+                style: "padding-top: 10px;",
+                label{"Focus Time"}
+                SetTime{
+                    time: task_time.clone(), count: count.clone(), start: start.clone(), max: 60, step: 5
+                }
+            }
+            div{
+                label{"Short Break"}
+                SetTime{
+                    time: short_break_time.clone(), count: count.clone(), start: start.clone(), max: 10, step: 1
+                }
+            }
+            div{
+                label{"Long Break"}
+                SetTime{
+                    time: break_time.clone(), count: count.clone(), start: start.clone(), max: 30, step: 2
+                }
+            }
+        }
+        
+        div{
+            class: "timer",
+            style: "display: {timer};",
+            Clock{
+                task_time: task_time.clone(), short_break: short_break_time.clone(),
+                long_break: break_time.clone(), count: count.clone(), start: start.clone(), color: color.clone()
+            }
+        }
     })
 }
 
 fn main() {
-    dioxus::desktop::launch(app);
+    dioxus::desktop::launch_cfg(
+        app, |c| c.with_window(|w|w
+            .with_title("POMODORO")
+            .with_inner_size(
+                dioxus::desktop::tao::dpi::LogicalSize::new(330.0, 200.0)
+            )
+            .with_resizable(false)
+        )
+    );
 }

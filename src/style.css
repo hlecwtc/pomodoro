@@ -1,0 +1,54 @@
+#main{
+    height: 180px;
+}
+
+.header{
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+    height: 20%;
+}
+
+.header button{
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 7px 16px;
+    transition: 0.3s;
+    width: 50%;
+    font-size: 20px;
+}
+
+.menu div{
+    height: 33.33%;
+}
+
+.timer div{
+    background-color: #f1f1f1;
+}
+
+.timer button{
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    width: 50%;
+    font-size: 20px;
+}
+
+#StartButton{
+    color: #0000ff;
+}
+
+#StopButton{
+    color: #ff0000;
+}
+
+#ResetButton{
+    color: #000000;
+}
