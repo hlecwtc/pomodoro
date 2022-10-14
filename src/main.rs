@@ -1,3 +1,4 @@
+#![windows_subsystem = "windows"]
 #![allow(non_snake_case)]
 
 use dioxus::prelude::*;
@@ -92,6 +93,8 @@ pub fn Clock(
             style: "display: block;",
             onclick: move |_ev| {
                 start.set(false);
+                start_button.set("block");
+                stop_button.set("none");
                 count.set(*task_time.current()*60);
                 clock_count.set(0);
                 color.set("#B22222".to_string());
